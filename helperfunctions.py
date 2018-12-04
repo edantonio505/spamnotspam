@@ -149,3 +149,71 @@ def get_enron_raw_dataset():
         
 
 
+
+
+
+
+
+#Lighspam
+def download_extract_lingspam():
+    url = "http://www.aueb.gr/users/ion/data/lingspam_public.tar.gz"
+    directory = "{}/{}".format(path, "lingspam")
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    filename = str(url).split("/")[-1]
+    file_path = "{}/{}".format(directory, filename)
+    f = requests.get(url, allow_redirects=True)
+    open(file_path, 'wb').write(f.content)
+    tar = tarfile.open(file_path, "r:gz")
+    tar.extractall(directory)
+    tar.close()
+    if os.path.isfile(file_path):
+            os.unlink(file_path)
+
+
+def parse_lingspam():
+    directory = "{}/{}".format(path, "lingspam")
+    ligspam_bare_path = "{}/lingspam_public/bare".format(directory)
+    lingspam_bare_content = os.listdir(ligspam_bare_path)
+
+    email_corpus = dict({
+        "emails": [],
+        "types": []
+    })
+
+    for part in lingspam_bare_content:
+        part_dir = "{}/{}".format(ligspam_bare_path, part)
+        part_content = os.listdir(part_dir)
+
+        for email in part_content:
+            filename = "{}/{}".format(part_dir, email)
+
+            if "spms" in filename:
+                email_corpus["emails"].append(read_email_return_str(filename))
+                email_corpus["types"].append("spam")
+            else:
+                email_corpus["emails"].append(read_email_return_str(filename))
+                email_corpus["types"].append("ham")
+
+    email_corpus = pd.DataFrame(email_corpus)
+    email_corpus.to_csv("{}/lingspam.csv".format(directory), index=False)
+    return email_corpus
+
+
+
+
+
+def get_lingspam_dataset():
+    directory = "{}/{}".format(path, "lingspam")
+    filename = "{}/lingspam.csv".format(directory)
+
+    if os.path.isfile(filename):
+        print("file exists")
+        df = pd.read_csv(filename)
+        return df
+    else:
+        if not os.path.isdir(directory) or len(os.listdir(directory)) == 0:
+            print("downloading lingspam dataset...")
+            download_extract_lingspam()
+        print("parsing lingspam dataset...")
+        return parse_lingspam()

@@ -4,3 +4,4 @@ enron_raw
 .ipynb_checkpoints
 __pycache__
 lingspam
+emails.csv
